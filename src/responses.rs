@@ -34,6 +34,12 @@ pub enum SlotTable {
     Time(SlotTableTime),
 }
 
+#[derive(Serialize)]
+pub struct TimeItems {
+    pub time: SlotTime,
+    pub items: Vec<Slot>
+}
+
 impl fmt::Display for SlotTime {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "({}, {})", self.init, self.end)
