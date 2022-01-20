@@ -223,6 +223,90 @@ TODO: make getBookings4 for the following json structure
 }
 */
 
+#[get("/getBookings4")]
+fn get_booking_status_4() -> Json<Vec<responses::TimeItems>> {
+    let slots = get_booking_data();
+    let result = vec![
+        responses::TimeItems {
+            time: slots[0],
+            items: vec![
+                responses::Slot {
+                    id: 1,
+                    time: slots[0],
+                    status: responses::SlotStatus::FREE,
+                },
+                responses::Slot {
+                    id: 2,
+                    time: slots[0],
+                    status: responses::SlotStatus::FREE,
+                },
+            ]
+        },
+        responses::TimeItems {
+            time: slots[1],
+            items: vec![
+                responses::Slot {
+                    id: 3,
+                    time: slots[1],
+                    status: responses::SlotStatus::FREE,
+                },
+                responses::Slot {
+                    id: 4,
+                    time: slots[1],
+                    status: responses::SlotStatus::FREE,
+                },
+            ]
+        },
+        responses::TimeItems {
+            time: slots[2],
+            items: vec![
+                responses::Slot {
+                    id: 5,
+                    time: slots[2],
+                    status: responses::SlotStatus::FREE,
+                },
+                responses::Slot {
+                    id: 6,
+                    time: slots[2],
+                    status: responses::SlotStatus::FREE,
+                },
+            ]
+        },
+        responses::TimeItems{
+            time: slots[3],
+            items: vec![
+                responses::Slot {
+                    id: 7,
+                    time: slots[3],
+                    status: responses::SlotStatus::FREE,
+                },
+                responses::Slot {
+                    id: 8,
+                    time: slots[3],
+                    status: responses::SlotStatus::FREE,
+                },
+            ]
+        },
+        responses::TimeItems{
+            time: slots[4],
+            items: vec![
+                responses::Slot {
+                    id: 9,
+                    time: slots[4],
+                    status: responses::SlotStatus::FREE,
+                },
+                responses::Slot {
+                    id: 10,
+                    time: slots[4],
+                    status: responses::SlotStatus::FREE,
+                },
+            ]
+        },
+    ];
+
+    Json(result)
+}
+
 fn get_booking_data() -> Vec<responses::SlotTime> {
     let init_1 = Utc.ymd(2022, 1, 1).and_hms(9, 0, 0);
     let end_1 = Utc.ymd(2022, 1, 1).and_hms(10, 0, 0);
@@ -256,7 +340,8 @@ async fn main() {
                 index,
                 get_booking_status_1,
                 get_booking_status_2,
-                get_booking_status_3
+                get_booking_status_3,
+                get_booking_status_4,
             ],
         )
         .launch()
