@@ -5,7 +5,6 @@ use std::collections::BTreeMap;
 use std::fmt;
 
 
-
 /*
  * Structs
  */
@@ -18,17 +17,20 @@ pub struct Template {
     pub duration: chrono::Duration,
 }
 
+
 #[derive(Serialize, Debug)]
 pub enum Status {
     FREE,
     BOOKED,
 }
 
+
 #[derive(Serialize, Debug, Copy, Clone, Hash, Eq)]
 pub struct TimeRange {
     pub init: i64,
     pub end: i64,
 }
+
 
 #[derive(Serialize, Debug)]
 pub struct Slot {
@@ -112,6 +114,7 @@ impl TimeRange {
 
 
  impl Template {
+
     pub fn generate_slots(template: Template) -> Vec<Slot> {
         let mut result: Vec<Slot> = Vec::new();
 
