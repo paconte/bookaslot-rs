@@ -9,7 +9,7 @@ use std::net::{IpAddr, Ipv4Addr};
 mod models;
 
 pub use models::models::{Slot, Status, Template, TimeRange};
-pub use models::responses::{TimeItems};
+pub use models::responses::{TimeItems, DailySortedSlots};
 
 
 #[get("/")]
@@ -239,11 +239,11 @@ fn get_bookings_status_5() -> Json<Vec<TimeItems>> {
 
 
 #[get("/getBookings6")]
-fn get_bookings_status_6() -> Json<BTreeMap<String, Vec<TimeItems>>> {
+fn get_bookings_status_6() -> Json<Vec<DailySortedSlots>>  {
     let template = create_template();
     let slots = Template::generate_slots(template);
     let slots_day = Slot::to_day_map(slots);
-    let result = TimeItems::to_day_response(slots_day);
+    let result = DailySortedSlots::to_day_response(slots_day);
 
     Json(result)
 }
