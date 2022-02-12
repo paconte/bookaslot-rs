@@ -232,7 +232,7 @@ fn get_booking_status_4() -> Json<Vec<TimeItems>> {
 
 #[get("/getBookings5")]
 fn get_bookings_status_5() -> Json<Vec<TimeItems>> {
-    let template = create_template();
+    let template = create_template(30);
     let slots = Template::generate_slots(template, 2);
     let hourly_slots = Slot::to_hour_map(slots);
     let result = TimeItems::to_hour_response(hourly_slots);
@@ -243,11 +243,7 @@ fn get_bookings_status_5() -> Json<Vec<TimeItems>> {
 
 #[get("/getBookings6")]
 fn get_bookings_status_6() -> Json<Vec<DailySortedSlots>>  {
-    let template = create_template();
-
-    //let mut slots1 = Template::generate_slots(template1);
-    //let mut slots2 = Template::generate_slots(template2);
-    // slots1.append(&mut slots2);
+    let template = create_template(30);
     let slots = Template::generate_slots(template, 2);
     let daily_slots = Slot::to_day_map(slots);
     let result = DailySortedSlots::to_day_response(daily_slots);
@@ -281,10 +277,10 @@ fn get_booking_data_day_1() -> Vec<TimeRange> {
 }
 
 
-fn create_template() -> Template {
+fn create_template(add: i64) -> Template {
     let template = Template {
         init_day: Utc::today(),
-        end_day: Utc::today() + Duration::days(1),
+        end_day: Utc::today() + Duration::days(add),
         init_time: chrono::NaiveTime::from_hms(9, 0, 0),
         end_time: chrono::NaiveTime::from_hms(14, 0, 0),
         duration: Duration::minutes(30),
