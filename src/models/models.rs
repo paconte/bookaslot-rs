@@ -115,9 +115,12 @@ impl TimeRange {
 
  impl Template {
 
-    pub fn generate_slots(template: Template) -> Vec<Slot> {
-        let mut result: Vec<Slot> = Vec::new();
+    pub fn generate_slots(template: Template, size: u8) -> Vec<Slot> {
+        if size < 1 {
+            panic!("Argument size ({}), must be bigger than 0.", size);
+        }
 
+        let mut result: Vec<Slot> = Vec::new();
         let mut init_day = template.init_day;
         let mut init_time;
         let mut id: u64 = 0;
@@ -129,16 +132,18 @@ impl TimeRange {
                 if new_end <= template.end_time {
                     let new_init_slot = init_day.and_time(init_time).unwrap();
                     let new_end_slot = init_day.and_time(new_end).unwrap();
-                    let slot = Slot {
-                        id: id,
-                        status: Status::FREE,
-                        time: TimeRange {
-                            init: new_init_slot.timestamp(),
-                            end: new_end_slot.timestamp(),
-                        },
-                    };
-                    result.push(slot);
-                    id += 1;
+                    for _ in 0..size {
+                        let slot = Slot {
+                            id: id,
+                            status: Status::FREE,
+                            time: TimeRange {
+                                init: new_init_slot.timestamp(),
+                                end: new_end_slot.timestamp(),
+                            },
+                        };
+                        result.push(slot);
+                        id += 1;
+                    }
                 }
                 init_time += template.duration;
             }

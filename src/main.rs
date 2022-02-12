@@ -233,7 +233,7 @@ fn get_booking_status_4() -> Json<Vec<TimeItems>> {
 #[get("/getBookings5")]
 fn get_bookings_status_5() -> Json<Vec<TimeItems>> {
     let template = create_template();
-    let slots = Template::generate_slots(template);
+    let slots = Template::generate_slots(template, 2);
     let hourly_slots = Slot::to_hour_map(slots);
     let result = TimeItems::to_hour_response(hourly_slots);
 
@@ -243,14 +243,13 @@ fn get_bookings_status_5() -> Json<Vec<TimeItems>> {
 
 #[get("/getBookings6")]
 fn get_bookings_status_6() -> Json<Vec<DailySortedSlots>>  {
-    let template1 = create_template();
-    let template2 = create_template();
+    let template = create_template();
 
-    let mut slots1 = Template::generate_slots(template1);
-    let mut slots2 = Template::generate_slots(template2);
-    slots1.append(&mut slots2);
-
-    let daily_slots = Slot::to_day_map(slots1);
+    //let mut slots1 = Template::generate_slots(template1);
+    //let mut slots2 = Template::generate_slots(template2);
+    // slots1.append(&mut slots2);
+    let slots = Template::generate_slots(template, 2);
+    let daily_slots = Slot::to_day_map(slots);
     let result = DailySortedSlots::to_day_response(daily_slots);
 
     Json(result)
