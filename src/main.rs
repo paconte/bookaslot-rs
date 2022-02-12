@@ -17,6 +17,7 @@ fn index() -> &'static str {
     "This is my Rust reservation REST API"
 }
 
+
 #[get("/getBookings1")]
 fn get_booking_status_1() -> Json<Vec<Vec<Slot>>> {
     let slots = get_booking_data_day_1();
@@ -85,6 +86,7 @@ fn get_booking_status_1() -> Json<Vec<Vec<Slot>>> {
 
     Json(result)
 }
+
 
 #[get("/getBookings2")]
 fn get_booking_status_2() -> Json<BTreeMap<String, Vec<Slot>>> {
@@ -227,12 +229,13 @@ fn get_booking_status_4() -> Json<Vec<TimeItems>> {
     Json(result)
 }
 
+
 #[get("/getBookings5")]
 fn get_bookings_status_5() -> Json<Vec<TimeItems>> {
     let template = create_template();
-    let slots = Template::generate_slots(template);
-    let slots_map: BTreeMap<TimeRange, Vec<Slot>> = Slot::to_hour_map(slots);
-    let result = TimeItems::to_hour_response(slots_map);
+    let slots = Template::generate_slots(template, 2);
+    let hourly_slots = Slot::to_hour_map(slots);
+    let result = TimeItems::to_hour_response(hourly_slots);
 
     Json(result)
 }
@@ -241,9 +244,13 @@ fn get_bookings_status_5() -> Json<Vec<TimeItems>> {
 #[get("/getBookings6")]
 fn get_bookings_status_6() -> Json<Vec<DailySortedSlots>>  {
     let template = create_template();
-    let slots = Template::generate_slots(template);
-    let slots_day = Slot::to_day_map(slots);
-    let result = DailySortedSlots::to_day_response(slots_day);
+
+    //let mut slots1 = Template::generate_slots(template1);
+    //let mut slots2 = Template::generate_slots(template2);
+    // slots1.append(&mut slots2);
+    let slots = Template::generate_slots(template, 2);
+    let daily_slots = Slot::to_day_map(slots);
+    let result = DailySortedSlots::to_day_response(daily_slots);
 
     Json(result)
 }
