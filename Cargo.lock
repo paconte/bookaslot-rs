@@ -832,6 +832,7 @@ name = "reservations-api"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "rand",
  "rocket",
  "serde",
  "serde_json",

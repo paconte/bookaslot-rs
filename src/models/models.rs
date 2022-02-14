@@ -1,4 +1,5 @@
 use chrono::{DateTime, Duration, NaiveDate, Utc};
+use rand::Rng;
 use serde::Serialize;
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
@@ -113,7 +114,7 @@ impl TimeRange {
  */
 
 
- impl Template {
+impl Template {
 
     pub fn generate_slots(template: Template, size: u8) -> Vec<Slot> {
         if size < 1 {
@@ -124,6 +125,7 @@ impl TimeRange {
         let mut init_day = template.init_day;
         let mut init_time;
         let mut id: u64 = 0;
+        let mut rng = rand::thread_rng();
 
         while init_day <= template.end_day {
             init_time = template.init_time;
@@ -135,7 +137,7 @@ impl TimeRange {
                     for _ in 0..size {
                         let slot = Slot {
                             id: id,
-                            status: Status::FREE,
+                            status: Status::new(2, rng.gen_range(0..3)),
                             time: TimeRange {
                                 init: new_init_slot.timestamp(),
                                 end: new_end_slot.timestamp(),
@@ -154,3 +156,19 @@ impl TimeRange {
     }
 }
 
+
+/**
+ * Status implementations
+ */
+
+
+impl Status {
+
+    pub fn new(percentage: u8, value: u8) -> Status {
+        if value < percentage {
+            Status::FREE
+        } else {
+            Status::BOOKED
+        }
+    }
+}
