@@ -1,14 +1,17 @@
-#[macro_use]
-extern crate rocket;
+#[macro_use]extern crate rocket;
+#[macro_use]extern crate diesel;
 
 use chrono::{Duration, TimeZone, Utc};
+use dotenv::dotenv;
+use rocket::figment::{value::{Map, Value}, util::map};
 use rocket::serde::json::Json;
+use rocket_sync_db_pools;
+use rocket_sync_db_pools::database;
 use std::collections::BTreeMap;
-use std::net::{IpAddr, Ipv4Addr};
 
 mod models;
 
-pub use models::models::{Slot, Status, Template, TimeRange};
+pub use models::models::{Slot, State, Template, TimeRange};
 pub use models::responses::{TimeItems, DailySortedSlots};
 
 
@@ -19,67 +22,77 @@ fn index() -> &'static str {
 
 
 #[get("/getBookings1")]
-fn get_booking_status_1() -> Json<Vec<Vec<Slot>>> {
+fn get_booking_state_1() -> Json<Vec<Vec<Slot>>> {
     let slots = get_booking_data_day_1();
     let result = vec![
         vec![
             Slot {
                 id: 2,
-                time: slots[0],
-                status: Status::FREE,
+                start: slots[0].init,
+                finish: slots[0].end,
+                state: State::FREE,
             },
             Slot {
                 id: 3,
-                time: slots[0],
-                status: Status::FREE,
+                start: slots[0].init,
+                finish: slots[0].end,
+                state: State::FREE,
             },
         ],
         vec![
             Slot {
                 id: 5,
-                time: slots[1],
-                status: Status::FREE,
+                start: slots[1].init,
+                finish: slots[1].end,
+                state: State::FREE,
             },
             Slot {
                 id: 6,
-                time: slots[1],
-                status: Status::FREE,
+                start: slots[1].init,
+                finish: slots[1].end,
+                state: State::FREE,
             },
         ],
         vec![
             Slot {
                 id: 8,
-                time: slots[2],
-                status: Status::FREE,
+                start: slots[2].init,
+                finish: slots[2].end,
+                state: State::FREE,
             },
             Slot {
                 id: 9,
-                time: slots[2],
-                status: Status::FREE,
+                start: slots[2].init,
+                finish: slots[2].end,
+                state: State::FREE,
             },
         ],
         vec![
             Slot {
                 id: 11,
-                time: slots[3],
-                status: Status::FREE,
+                start: slots[3].init,
+                finish: slots[3].end,
+                state: State::FREE,
             },
             Slot {
                 id: 12,
-                time: slots[3],
-                status: Status::FREE,
+                start: slots[3].init,
+                finish: slots[3].end,
+                state: State::FREE,
             },
         ],
         vec![
             Slot {
                 id: 14,
-                time: slots[4],
-                status: Status::FREE,
+                start: slots[4].init,
+                finish: slots[4].end,
+                state: State::FREE,
             },
             Slot {
                 id: 15,
-                time: slots[4],
-                status: Status::FREE,
+                start: slots[4].init,
+                finish: slots[4].end,
+                state: State::FREE,
             },
         ],
     ];
@@ -89,7 +102,7 @@ fn get_booking_status_1() -> Json<Vec<Vec<Slot>>> {
 
 
 #[get("/getBookings2")]
-fn get_booking_status_2() -> Json<BTreeMap<String, Vec<Slot>>> {
+fn get_booking_state_2() -> Json<BTreeMap<String, Vec<Slot>>> {
     let slots = get_booking_data_day_1();
 
     let result = BTreeMap::from([
@@ -98,13 +111,15 @@ fn get_booking_status_2() -> Json<BTreeMap<String, Vec<Slot>>> {
             vec![
                 Slot {
                     id: 1,
-                    time: slots[0],
-                    status: Status::FREE,
+                    start: slots[0].init,
+                    finish: slots[0].end,
+                    state: State::FREE,
                 },
                 Slot {
                     id: 2,
-                    time: slots[0],
-                    status: Status::FREE,
+                    start: slots[0].init,
+                    finish: slots[0].end,
+                    state: State::FREE,
                 },
             ],
         ),
@@ -113,13 +128,15 @@ fn get_booking_status_2() -> Json<BTreeMap<String, Vec<Slot>>> {
             vec![
                 Slot {
                     id: 3,
-                    time: slots[1],
-                    status: Status::FREE,
+                    start: slots[1].init,
+                    finish: slots[1].end,
+                    state: State::FREE,
                 },
                 Slot {
                     id: 4,
-                    time: slots[1],
-                    status: Status::FREE,
+                    start: slots[1].init,
+                    finish: slots[1].end,
+                    state: State::FREE,
                 },
             ],
         ),
@@ -128,13 +145,15 @@ fn get_booking_status_2() -> Json<BTreeMap<String, Vec<Slot>>> {
             vec![
                 Slot {
                     id: 5,
-                    time: slots[2],
-                    status: Status::FREE,
+                    start: slots[2].init,
+                    finish: slots[2].end,
+                    state: State::FREE,
                 },
                 Slot {
                     id: 6,
-                    time: slots[2],
-                    status: Status::FREE,
+                    start: slots[2].init,
+                    finish: slots[2].end,
+                    state: State::FREE,
                 },
             ],
         ),
@@ -145,7 +164,7 @@ fn get_booking_status_2() -> Json<BTreeMap<String, Vec<Slot>>> {
 
 
 #[get("/getBookings4")]
-fn get_booking_status_4() -> Json<Vec<TimeItems>> {
+fn get_booking_state_4() -> Json<Vec<TimeItems>> {
 
     let slots = get_booking_data_day_1();
     let result = vec![
@@ -154,13 +173,15 @@ fn get_booking_status_4() -> Json<Vec<TimeItems>> {
             items: vec![
                 Slot {
                     id: 1,
-                    time: slots[0],
-                    status: Status::FREE,
+                    start: slots[0].init,
+                    finish: slots[0].end,
+                    state: State::FREE,
                 },
                 Slot {
                     id: 2,
-                    time: slots[0],
-                    status: Status::FREE,
+                    start: slots[0].init,
+                    finish: slots[0].end,
+                    state: State::FREE,
                 },
             ],
         },
@@ -169,13 +190,15 @@ fn get_booking_status_4() -> Json<Vec<TimeItems>> {
             items: vec![
                 Slot {
                     id: 3,
-                    time: slots[1],
-                    status: Status::FREE,
+                    start: slots[1].init,
+                    finish: slots[1].end,
+                    state: State::FREE,
                 },
                 Slot {
                     id: 4,
-                    time: slots[1],
-                    status: Status::FREE,
+                    start: slots[1].init,
+                    finish: slots[1].end,
+                    state: State::FREE,
                 },
             ],
         },
@@ -184,13 +207,15 @@ fn get_booking_status_4() -> Json<Vec<TimeItems>> {
             items: vec![
                 Slot {
                     id: 5,
-                    time: slots[2],
-                    status: Status::FREE,
+                    start: slots[2].init,
+                    finish: slots[2].end,
+                    state: State::FREE,
                 },
                 Slot{
                     id: 6,
-                    time: slots[2],
-                    status: Status::FREE,
+                    start: slots[2].init,
+                    finish: slots[2].end,
+                    state: State::FREE,
                 },
             ],
         },
@@ -199,13 +224,15 @@ fn get_booking_status_4() -> Json<Vec<TimeItems>> {
             items: vec![
                 Slot{
                     id: 7,
-                    time: slots[3],
-                    status: Status::FREE,
+                    start: slots[3].init,
+                    finish: slots[3].end,
+                    state: State::FREE,
                 },
                 Slot {
                     id: 8,
-                    time: slots[3],
-                    status: Status::FREE,
+                    start: slots[3].init,
+                    finish: slots[3].end,
+                    state: State::FREE,
                 },
             ],
         },
@@ -214,13 +241,15 @@ fn get_booking_status_4() -> Json<Vec<TimeItems>> {
             items: vec![
                 Slot {
                     id: 9,
-                    time: slots[4],
-                    status: Status::FREE,
+                    start: slots[4].init,
+                    finish: slots[4].end,
+                    state: State::FREE,
                 },
                 Slot{
                     id: 10,
-                    time: slots[4],
-                    status: Status::FREE,
+                    start: slots[4].init,
+                    finish: slots[4].end,
+                    state: State::FREE,
                 },
             ],
         },
@@ -231,7 +260,7 @@ fn get_booking_status_4() -> Json<Vec<TimeItems>> {
 
 
 #[get("/getBookings5")]
-fn get_bookings_status_5() -> Json<Vec<TimeItems>> {
+fn get_bookings_state_5() -> Json<Vec<TimeItems>> {
     let template = create_template(30);
     let slots = Template::generate_slots(template, 2);
     let hourly_slots = Slot::to_hour_map(slots);
@@ -242,13 +271,27 @@ fn get_bookings_status_5() -> Json<Vec<TimeItems>> {
 
 
 #[get("/getBookings6")]
-fn get_bookings_status_6() -> Json<Vec<DailySortedSlots>>  {
+fn get_bookings_state_6() -> Json<Vec<DailySortedSlots>>  {
     let template = create_template(30);
     let slots = Template::generate_slots(template, 2);
     let daily_slots = Slot::to_day_map(slots);
     let result = DailySortedSlots::to_day_response(daily_slots);
 
+    println!("{:?}", result);
     Json(result)
+}
+
+
+#[post("/addReservations",  data = "<slots>")]
+async fn add_reservations(db: PgDatabase, slots: Json<Vec<Slot>>) {
+/*
+    db.run(|c| {
+        models::db::insert_slots(c, vec![slot.into_inner()])
+    }).await;
+*/
+    db.run(|c| {
+        models::db::insert_slots(c, slots.into_inner())
+    }).await;
 }
 
 
@@ -290,24 +333,52 @@ fn create_template(add: i64) -> Template {
 }
 
 
-#[rocket::main]
-async fn main() {
-    let mut config = rocket::config::Config::default();
-    config.address = IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0));
+#[get("/test_database")]
+async fn db_test(db: PgDatabase) -> &'static str {
 
-    let _ = rocket::build()
-        .configure(config)
-        .mount(
-            "/",
-            routes![
-                index,
-                get_booking_status_1,
-                get_booking_status_2,
-                get_booking_status_4,
-                get_bookings_status_5,
-                get_bookings_status_6,
-            ],
-        )
-        .launch()
-        .await;
+    //let slot: db::Slot = db.run(|c| { schema::slots::table.first::<db::Slot>(c) }).await?;
+    //let slots: Vec<db::Slot> = db.run(|c| { schema::slots::table.load::<db::Slot>(c) }).await?;
+    //let time_ranges: Vec<db::TimeRange> = db.run(|c| { schema::time_range::table.load::<db::TimeRange>(c) }).await?;
+    //let slots: Vec<db::Slot> = db.run(|c| { schema::slots::table.inner_join(db::TimeRange::table).load::<db::Slot>(c) }).await?;
+
+    db.run(|c| {models::db::test_database(c)}).await;
+    "This is a database test with diesel."
+}
+
+
+#[database("reservations_db")]
+struct PgDatabase(rocket_sync_db_pools::diesel::PgConnection);
+
+
+#[launch]
+fn rocket() -> _ {
+    dotenv().ok();
+
+    let db_url: String = std::env::var("DATABASE_URL").unwrap();
+    let db: Map<_, Value> = map! {
+        "url" => db_url.into(),
+        "pool_size" => 10.into()
+    };
+
+    let figment = rocket::Config::figment()
+        .merge(("address", "0.0.0.0"))
+        .merge(("databases", map!["reservations_db" => db]));
+
+    println!("{:?}", figment);
+
+    rocket::custom(figment)
+    .attach(PgDatabase::fairing())
+    .mount(
+        "/",
+        routes![
+            index,
+            get_booking_state_1,
+            get_booking_state_2,
+            get_booking_state_4,
+            get_bookings_state_5,
+            get_bookings_state_6,
+            db_test,
+            add_reservations,
+        ],
+    )
 }
