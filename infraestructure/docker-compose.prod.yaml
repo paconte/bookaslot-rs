@@ -1,0 +1,29 @@
+version: '3.7'
+
+services:
+
+  reservation-api:
+    image: paconte/rs-reservation-api:${RESERVATIONS_API_VERSION}
+    restart: unless-stopped
+    ports:
+      - ${RESERVATIONS_API_PORT}:8000
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:12.4-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - ${POSTGRES_PORT}:5432
+    volumes:
+      - /root/reservations/postgres-data:/var/lib/postgresql/data
+    logging:
+      options:
+        max-size: 10m
+        max-file: "3"
