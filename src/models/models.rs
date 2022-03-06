@@ -1,9 +1,10 @@
 use chrono::{DateTime, Duration, NaiveDate, Utc};
 use rand::Rng;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
 use std::fmt;
+use std::str::FromStr;
 
 
 /*
@@ -19,8 +20,8 @@ pub struct Template {
 }
 
 
-#[derive(Serialize, Debug)]
-pub enum Status {
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+pub enum State {
     FREE,
     BOOKED,
 }
@@ -33,11 +34,12 @@ pub struct TimeRange {
 }
 
 
-#[derive(Serialize, Debug)]
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 pub struct Slot {
-    pub id: u64,
-    pub time: TimeRange,
-    pub status: Status,
+    pub id: i32,
+    pub state: State,
+    pub start: i64,
+    pub finish: i64
 }
 
 
@@ -52,7 +54,8 @@ pub struct Slot {
         let mut result: BTreeMap<TimeRange, Vec<Slot>> = BTreeMap::new();
 
         for slot in slots.into_iter() {
-            let entry = result.entry(slot.time).or_insert(Vec::new());
+            let time_range = TimeRange::from_slot(slot);
+            let entry = result.entry(time_range).or_insert(Vec::new());
             entry.push(slot);
         }
         result
@@ -107,6 +110,10 @@ impl TimeRange {
             end: end.timestamp(),
         }
     }
+
+    pub fn from_slot(slot: Slot) -> TimeRange {
+        TimeRange { init: slot.start, end: slot.finish }
+    }
 }
 
 /*
@@ -124,7 +131,7 @@ impl Template {
         let mut result: Vec<Slot> = Vec::new();
         let mut init_day = template.init_day;
         let mut init_time;
-        let mut id: u64 = 0;
+        let mut id: i32 = 0;
         let mut rng = rand::thread_rng();
 
         while init_day <= template.end_day {
@@ -137,11 +144,9 @@ impl Template {
                     for _ in 0..size {
                         let slot = Slot {
                             id: id,
-                            status: Status::new(2, rng.gen_range(0..3)),
-                            time: TimeRange {
-                                init: new_init_slot.timestamp(),
-                                end: new_end_slot.timestamp(),
-                            },
+                            state: State::new(2, rng.gen_range(0..3)),
+                            start: new_init_slot.timestamp(),
+                            finish: new_end_slot.timestamp(),
                         };
                         result.push(slot);
                         id += 1;
@@ -158,17 +163,37 @@ impl Template {
 
 
 /**
- * Status implementations
+ * State implementations
  */
 
 
-impl Status {
+impl State {
 
-    pub fn new(percentage: u8, value: u8) -> Status {
+    pub fn new(percentage: u8, value: u8) -> State {
         if value < percentage {
-            Status::FREE
+            State::FREE
         } else {
-            Status::BOOKED
+            State::BOOKED
+        }
+    }
+}
+
+impl FromStr for State {
+    type Err = ();
+    fn from_str(input: &str) -> Result<State, Self::Err> {
+        match input {
+            "FREE"  => Ok(State::FREE),
+            "BOOKED"  => Ok(State::BOOKED),
+            _      => Err(()),
+        }
+    }
+}
+
+impl fmt::Display for State {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            State::FREE => write!(f, "FREE"),
+            State::BOOKED => write!(f, "BOOKED"),
         }
     }
 }
