@@ -32,6 +32,7 @@ pub struct Template {
 pub enum State {
     FREE,
     BOOKED,
+    TOBEBOOKED,
 }
 
 
@@ -202,9 +203,11 @@ impl FromStr for State {
     type Err = ();
     fn from_str(input: &str) -> Result<State, Self::Err> {
         match input {
-            "FREE"  => Ok(State::FREE),
-            "BOOKED"  => Ok(State::BOOKED),
-            _      => Err(()),
+            "FREE" => Ok(State::FREE),
+            "BOOKED" => Ok(State::BOOKED),
+            "TOBEBOOKED" => Ok(State::BOOKED),
+            //"TOBEBOOKED" => Ok(State::TOBEBOOKED),
+            _  => Err(()),
         }
     }
 }
@@ -214,6 +217,8 @@ impl fmt::Display for State {
         match *self {
             State::FREE => write!(f, "FREE"),
             State::BOOKED => write!(f, "BOOKED"),
+            State::TOBEBOOKED => write!(f, "BOOKED"),
+            //State::TOBEBOOKED => write!(f, "TOBEBOOKED"),
         }
     }
 }
@@ -229,6 +234,7 @@ impl<Db: Backend> ToSql<State, Db> for State {
         match *self {
             State::FREE => out.write_all(b"FREE")?,
             State::BOOKED => out.write_all(b"BOOKED")?,
+            State::TOBEBOOKED => out.write_all(b"BOOKED")?,
         }
         Ok(IsNull::No)
     }

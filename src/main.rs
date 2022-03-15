@@ -5,6 +5,8 @@ use chrono::{Duration, TimeZone, Utc};
 use dotenv::dotenv;
 use rocket::figment::{value::{Map, Value}, util::map};
 use rocket::serde::json::Json;
+use rocket::serde::{Serialize,Deserialize};
+use rocket::response::status::Created;
 use rocket_sync_db_pools;
 use rocket_sync_db_pools::database;
 use std::collections::BTreeMap;
@@ -13,6 +15,26 @@ mod models;
 
 pub use models::models::{Slot, State, Template, TimeRange};
 pub use models::responses::{TimeItems, DailySortedSlots};
+
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ApiError {
+    pub details: String,
+}
+
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ApiSuccess {
+    pub success: bool
+}
+
+
+impl ApiSuccess {
+
+    pub fn new() -> ApiSuccess {
+        ApiSuccess {success: true}
+    }
+}
 
 
 #[get("/")]
@@ -282,16 +304,21 @@ fn get_bookings_state_6() -> Json<Vec<DailySortedSlots>>  {
 }
 
 
+fn convert_db_error(error: diesel::result::Error) -> ApiError {
+    ApiError{details: error.to_string()}
+}
+
+
 #[post("/addReservations",  data = "<slots>")]
-async fn add_reservations(db: PgDatabase, slots: Json<Vec<Slot>>) {
-/*
-    db.run(|c| {
-        models::db::insert_slots(c, vec![slot.into_inner()])
-    }).await;
-*/
-    db.run(|c| {
-        models::db::insert_slots(c, slots.into_inner())
-    }).await;
+async fn add_reservations(db: PgDatabase, slots: Json<Vec<Slot>>) -> Result<Created<Json<ApiSuccess>>, Json<ApiError>> {
+    db.run(
+        |c| {
+            models::db::insert_slots(c, slots.into_inner())
+        })
+        .await
+        .map(|_| Created::new("/addReservations").body(Json(ApiSuccess::new())))
+        .map_err(|e| Json(convert_db_error(e))
+    )
 }
 
 
