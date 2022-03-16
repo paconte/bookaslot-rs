@@ -1,1 +1,4 @@
 /target
+/postgres-data/
+*.code-workspace
+.env
