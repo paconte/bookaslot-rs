@@ -372,7 +372,6 @@ async fn db_test(db: PgDatabase) -> &'static str {
     "This is a database test with diesel."
 }
 
-
 #[database("reservations_db")]
 struct PgDatabase(rocket_sync_db_pools::diesel::PgConnection);
 
