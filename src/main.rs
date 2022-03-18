@@ -1,15 +1,40 @@
-#[macro_use]
-extern crate rocket;
+#[macro_use]extern crate rocket;
+#[macro_use]extern crate diesel;
 
 use chrono::{Duration, TimeZone, Utc};
+use dotenv::dotenv;
+use rocket::figment::{value::{Map, Value}, util::map};
 use rocket::serde::json::Json;
+use rocket::serde::{Serialize,Deserialize};
+use rocket::response::status::Created;
+use rocket_sync_db_pools;
+use rocket_sync_db_pools::database;
 use std::collections::BTreeMap;
-use std::net::{IpAddr, Ipv4Addr};
 
 mod models;
 
 pub use models::models::{Slot, State, Template, TimeRange};
 pub use models::responses::{TimeItems, DailySortedSlots};
+
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ApiError {
+    pub details: String,
+}
+
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ApiSuccess {
+    pub success: bool
+}
+
+
+impl ApiSuccess {
+
+    pub fn new() -> ApiSuccess {
+        ApiSuccess {success: true}
+    }
+}
 
 
 #[get("/")]
@@ -274,7 +299,26 @@ fn get_bookings_state_6() -> Json<Vec<DailySortedSlots>>  {
     let daily_slots = Slot::to_day_map(slots);
     let result = DailySortedSlots::to_day_response(daily_slots);
 
+    println!("{:?}", result);
     Json(result)
+}
+
+
+fn convert_db_error(error: diesel::result::Error) -> ApiError {
+    ApiError{details: error.to_string()}
+}
+
+
+#[post("/addReservations",  data = "<slots>")]
+async fn add_reservations(db: PgDatabase, slots: Json<Vec<Slot>>) -> Result<Created<Json<ApiSuccess>>, Json<ApiError>> {
+    db.run(
+        |c| {
+            models::db::insert_slots(c, slots.into_inner())
+        })
+        .await
+        .map(|_| Created::new("/addReservations").body(Json(ApiSuccess::new())))
+        .map_err(|e| Json(convert_db_error(e))
+    )
 }
 
 
@@ -316,24 +360,51 @@ fn create_template(add: i64) -> Template {
 }
 
 
-#[rocket::main]
-async fn main() {
-    let mut config = rocket::config::Config::default();
-    config.address = IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0));
+#[get("/test_database")]
+async fn db_test(db: PgDatabase) -> &'static str {
 
-    let _ = rocket::build()
-        .configure(config)
-        .mount(
-            "/",
-            routes![
-                index,
-                get_booking_state_1,
-                get_booking_state_2,
-                get_booking_state_4,
-                get_bookings_state_5,
-                get_bookings_state_6,
-            ],
-        )
-        .launch()
-        .await;
+    //let slot: db::Slot = db.run(|c| { schema::slots::table.first::<db::Slot>(c) }).await?;
+    //let slots: Vec<db::Slot> = db.run(|c| { schema::slots::table.load::<db::Slot>(c) }).await?;
+    //let time_ranges: Vec<db::TimeRange> = db.run(|c| { schema::time_range::table.load::<db::TimeRange>(c) }).await?;
+    //let slots: Vec<db::Slot> = db.run(|c| { schema::slots::table.inner_join(db::TimeRange::table).load::<db::Slot>(c) }).await?;
+
+    db.run(|c| {models::db::test_database(c)}).await;
+    "This is a database test with diesel."
+}
+
+#[database("reservations_db")]
+struct PgDatabase(rocket_sync_db_pools::diesel::PgConnection);
+
+
+#[launch]
+fn rocket() -> _ {
+    dotenv().ok();
+
+    let db_url: String = std::env::var("DATABASE_URL").unwrap();
+    let db: Map<_, Value> = map! {
+        "url" => db_url.into(),
+        "pool_size" => 10.into()
+    };
+
+    let figment = rocket::Config::figment()
+        .merge(("address", "0.0.0.0"))
+        .merge(("databases", map!["reservations_db" => db]));
+
+    println!("{:?}", figment);
+
+    rocket::custom(figment)
+    .attach(PgDatabase::fairing())
+    .mount(
+        "/",
+        routes![
+            index,
+            get_booking_state_1,
+            get_booking_state_2,
+            get_booking_state_4,
+            get_bookings_state_5,
+            get_bookings_state_6,
+            db_test,
+            add_reservations,
+        ],
+    )
 }

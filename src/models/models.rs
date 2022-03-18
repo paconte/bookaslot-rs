@@ -1,10 +1,18 @@
 use chrono::{DateTime, Duration, NaiveDate, Utc};
+use diesel::backend::Backend;
+use diesel::serialize::{self, IsNull, Output, ToSql};
+use diesel::deserialize::{self, FromSql};
+use diesel::pg::Pg;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
 use std::fmt;
+use std::io::Write;
 use std::str::FromStr;
+
+
+use crate::models::db::DbSlot;
 
 
 /*
@@ -24,6 +32,7 @@ pub struct Template {
 pub enum State {
     FREE,
     BOOKED,
+    TOBEBOOKED,
 }
 
 
@@ -70,6 +79,18 @@ pub struct Slot {
             entry.insert(time, items);
         }
         result
+    }
+}
+
+
+impl From<DbSlot> for Slot {
+    fn from(item: DbSlot) -> Self {
+        Slot {
+            id: item.id,
+            state: State::from_str(&item.state).unwrap(),
+            start: item.start,
+            finish: item.finish,
+        }
     }
 }
 
@@ -182,9 +203,11 @@ impl FromStr for State {
     type Err = ();
     fn from_str(input: &str) -> Result<State, Self::Err> {
         match input {
-            "FREE"  => Ok(State::FREE),
-            "BOOKED"  => Ok(State::BOOKED),
-            _      => Err(()),
+            "FREE" => Ok(State::FREE),
+            "BOOKED" => Ok(State::BOOKED),
+            "TOBEBOOKED" => Ok(State::BOOKED),
+            //"TOBEBOOKED" => Ok(State::TOBEBOOKED),
+            _  => Err(()),
         }
     }
 }
@@ -194,6 +217,36 @@ impl fmt::Display for State {
         match *self {
             State::FREE => write!(f, "FREE"),
             State::BOOKED => write!(f, "BOOKED"),
+            State::TOBEBOOKED => write!(f, "BOOKED"),
+            //State::TOBEBOOKED => write!(f, "TOBEBOOKED"),
+        }
+    }
+}
+
+
+/**
+ * Language implementations
+ */
+
+
+impl<Db: Backend> ToSql<State, Db> for State {
+    fn to_sql<W: Write>(&self, out: &mut Output<W, Db>) -> serialize::Result {
+        match *self {
+            State::FREE => out.write_all(b"FREE")?,
+            State::BOOKED => out.write_all(b"BOOKED")?,
+            State::TOBEBOOKED => out.write_all(b"BOOKED")?,
+        }
+        Ok(IsNull::No)
+    }
+}
+
+
+impl FromSql<State, Pg> for State {
+    fn from_sql(bytes: Option<&<Pg as Backend>::RawValue>) -> deserialize::Result<Self> {
+        match not_none!(bytes) {
+            b"FREE" => Ok(State::FREE),
+            b"BOOKED" => Ok(State::BOOKED),
+            _ => Err("Unrecognized enum variant".into()),
         }
     }
 }

@@ -5,14 +5,14 @@ use std::collections::BTreeMap;
 use crate::models::models::{Slot, TimeRange};
 
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 pub struct TimeItems {
     pub time: TimeRange,
     pub items: Vec<Slot>,
 }
 
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 pub struct DailySortedSlots {
     pub date: String,
     pub data: Vec<TimeItems>,
