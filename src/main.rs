@@ -13,7 +13,7 @@ use std::collections::BTreeMap;
 
 mod models;
 
-pub use models::models::{Slot, State, Template, TimeRange};
+pub use models::models::{Bookable, Slot, State, Template, TimeRange};
 pub use models::responses::{TimeItems, DailySortedSlots};
 
 
@@ -53,12 +53,14 @@ fn get_booking_state_1() -> Json<Vec<Vec<Slot>>> {
                 start: slots[0].init,
                 finish: slots[0].end,
                 state: State::FREE,
+                bookable: Bookable {id:1, name: String::from("Padel 1")},
             },
             Slot {
                 id: 3,
                 start: slots[0].init,
                 finish: slots[0].end,
                 state: State::FREE,
+                bookable: Bookable {id:2, name: String::from("Padel 2")},
             },
         ],
         vec![
@@ -67,12 +69,14 @@ fn get_booking_state_1() -> Json<Vec<Vec<Slot>>> {
                 start: slots[1].init,
                 finish: slots[1].end,
                 state: State::FREE,
+                bookable: Bookable {id:1, name: String::from("Padel 1")},
             },
             Slot {
                 id: 6,
                 start: slots[1].init,
                 finish: slots[1].end,
                 state: State::FREE,
+                bookable: Bookable {id:2, name: String::from("Padel 2")},
             },
         ],
         vec![
@@ -81,12 +85,14 @@ fn get_booking_state_1() -> Json<Vec<Vec<Slot>>> {
                 start: slots[2].init,
                 finish: slots[2].end,
                 state: State::FREE,
+                bookable: Bookable {id:1, name: String::from("Padel 1")},
             },
             Slot {
                 id: 9,
                 start: slots[2].init,
                 finish: slots[2].end,
                 state: State::FREE,
+                bookable: Bookable {id:2, name: String::from("Padel 2")},
             },
         ],
         vec![
@@ -95,12 +101,14 @@ fn get_booking_state_1() -> Json<Vec<Vec<Slot>>> {
                 start: slots[3].init,
                 finish: slots[3].end,
                 state: State::FREE,
+                bookable: Bookable {id:1, name: String::from("Padel 1")},
             },
             Slot {
                 id: 12,
                 start: slots[3].init,
                 finish: slots[3].end,
                 state: State::FREE,
+                bookable: Bookable {id:2, name: String::from("Padel 2")},
             },
         ],
         vec![
@@ -109,12 +117,14 @@ fn get_booking_state_1() -> Json<Vec<Vec<Slot>>> {
                 start: slots[4].init,
                 finish: slots[4].end,
                 state: State::FREE,
+                bookable: Bookable {id:2, name: String::from("Padel 1")},
             },
             Slot {
                 id: 15,
                 start: slots[4].init,
                 finish: slots[4].end,
                 state: State::FREE,
+                bookable: Bookable {id:2, name: String::from("Padel 2")},
             },
         ],
     ];
@@ -136,12 +146,14 @@ fn get_booking_state_2() -> Json<BTreeMap<String, Vec<Slot>>> {
                     start: slots[0].init,
                     finish: slots[0].end,
                     state: State::FREE,
+                    bookable: Bookable {id:1, name: String::from("Padel 1")},
                 },
                 Slot {
                     id: 2,
                     start: slots[0].init,
                     finish: slots[0].end,
                     state: State::FREE,
+                    bookable: Bookable {id:2, name: String::from("Padel 2")},
                 },
             ],
         ),
@@ -153,12 +165,14 @@ fn get_booking_state_2() -> Json<BTreeMap<String, Vec<Slot>>> {
                     start: slots[1].init,
                     finish: slots[1].end,
                     state: State::FREE,
+                    bookable: Bookable {id:1, name: String::from("Padel 1")},
                 },
                 Slot {
                     id: 4,
                     start: slots[1].init,
                     finish: slots[1].end,
                     state: State::FREE,
+                    bookable: Bookable {id:2, name: String::from("Padel 2")},
                 },
             ],
         ),
@@ -170,12 +184,14 @@ fn get_booking_state_2() -> Json<BTreeMap<String, Vec<Slot>>> {
                     start: slots[2].init,
                     finish: slots[2].end,
                     state: State::FREE,
+                    bookable: Bookable {id:1, name: String::from("Padel 1")},
                 },
                 Slot {
                     id: 6,
                     start: slots[2].init,
                     finish: slots[2].end,
                     state: State::FREE,
+                    bookable: Bookable {id:2, name: String::from("Padel 2")},
                 },
             ],
         ),
@@ -198,12 +214,14 @@ fn get_booking_state_4() -> Json<Vec<TimeItems>> {
                     start: slots[0].init,
                     finish: slots[0].end,
                     state: State::FREE,
+                    bookable: Bookable {id: 1, name: String::from("Padel 1")},
                 },
                 Slot {
                     id: 2,
                     start: slots[0].init,
                     finish: slots[0].end,
                     state: State::FREE,
+                    bookable: Bookable {id: 2, name: String::from("Padel 2")},
                 },
             ],
         },
@@ -215,12 +233,14 @@ fn get_booking_state_4() -> Json<Vec<TimeItems>> {
                     start: slots[1].init,
                     finish: slots[1].end,
                     state: State::FREE,
+                    bookable: Bookable {id: 1, name: String::from("Padel 1")},
                 },
                 Slot {
                     id: 4,
                     start: slots[1].init,
                     finish: slots[1].end,
                     state: State::FREE,
+                    bookable: Bookable {id: 2, name: String::from("Padel 2")},
                 },
             ],
         },
@@ -232,12 +252,14 @@ fn get_booking_state_4() -> Json<Vec<TimeItems>> {
                     start: slots[2].init,
                     finish: slots[2].end,
                     state: State::FREE,
+                    bookable: Bookable {id: 1, name: String::from("Padel 1")},
                 },
                 Slot{
                     id: 6,
                     start: slots[2].init,
                     finish: slots[2].end,
                     state: State::FREE,
+                    bookable: Bookable {id: 2, name: String::from("Padel 2")},
                 },
             ],
         },
@@ -249,12 +271,14 @@ fn get_booking_state_4() -> Json<Vec<TimeItems>> {
                     start: slots[3].init,
                     finish: slots[3].end,
                     state: State::FREE,
+                    bookable: Bookable {id: 1, name: String::from("Padel 1")},
                 },
                 Slot {
                     id: 8,
                     start: slots[3].init,
                     finish: slots[3].end,
                     state: State::FREE,
+                    bookable: Bookable {id: 2, name: String::from("Padel 1")},
                 },
             ],
         },
@@ -266,12 +290,14 @@ fn get_booking_state_4() -> Json<Vec<TimeItems>> {
                     start: slots[4].init,
                     finish: slots[4].end,
                     state: State::FREE,
+                    bookable: Bookable {id: 1, name: String::from("Padel 1")},
                 },
                 Slot{
                     id: 10,
                     start: slots[4].init,
                     finish: slots[4].end,
                     state: State::FREE,
+                    bookable: Bookable {id: 2, name: String::from("Padel 1")},
                 },
             ],
         },
@@ -284,7 +310,11 @@ fn get_booking_state_4() -> Json<Vec<TimeItems>> {
 #[get("/getBookings5")]
 fn get_bookings_state_5() -> Json<Vec<TimeItems>> {
     let template = create_template(30);
-    let slots = Template::generate_slots(template, 2);
+    let bookables = vec![
+        Bookable {id: 1, name: String::from("Pista 1")},
+        Bookable {id: 2, name: String::from("Pista 2")}
+    ];
+    let slots = Template::generate_slots(template, bookables);
     let hourly_slots = Slot::to_hour_map(slots);
     let result = TimeItems::to_hour_response(hourly_slots);
 
@@ -295,7 +325,11 @@ fn get_bookings_state_5() -> Json<Vec<TimeItems>> {
 #[get("/getBookings6")]
 fn get_bookings_state_6() -> Json<Vec<DailySortedSlots>>  {
     let template = create_template(30);
-    let slots = Template::generate_slots(template, 2);
+    let bookables = vec![
+        Bookable {id: 1, name: String::from("Pista 1")},
+        Bookable {id: 2, name: String::from("Pista 2")}
+    ];
+    let slots = Template::generate_slots(template, bookables);
     let daily_slots = Slot::to_day_map(slots);
     let result = DailySortedSlots::to_day_response(daily_slots);
 
