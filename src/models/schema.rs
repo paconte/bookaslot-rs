@@ -11,11 +11,11 @@ table! {
         state -> Varchar,
         start -> Int8,
         finish -> Int8,
-        bookable -> Int4,
+        bookable_id -> Int4,
     }
 }
 
-joinable!(slots -> bookable (bookable));
+joinable!(slots -> bookable (bookable_id));
 
 allow_tables_to_appear_in_same_query!(
     bookable,

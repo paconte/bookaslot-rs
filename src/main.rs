@@ -19,6 +19,7 @@ pub use models::responses::{TimeItems, DailySortedSlots};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ApiError {
+    pub success: bool,
     pub details: String,
 }
 
@@ -339,20 +340,19 @@ fn get_bookings_state_6() -> Json<Vec<DailySortedSlots>>  {
 
 
 fn convert_db_error(error: diesel::result::Error) -> ApiError {
-    ApiError{details: error.to_string()}
+    ApiError {
+        success: false,
+        details: error.to_string()
+    }
 }
 
 
 #[post("/addReservations",  data = "<slots>")]
 async fn add_reservations(db: PgDatabase, slots: Json<Vec<Slot>>) -> Result<Created<Json<ApiSuccess>>, Json<ApiError>> {
-    db.run(
-        |c| {
-            models::db::insert_slots(c, slots.into_inner())
-        })
-        .await
-        .map(|_| Created::new("/addReservations").body(Json(ApiSuccess::new())))
-        .map_err(|e| Json(convert_db_error(e))
-    )
+    db.run(|c| models::db::insert_slots(c, slots.into_inner()))
+    .await
+    .map(|_| Created::new("/addReservations").body(Json(ApiSuccess::new())))
+    .map_err(|e| Json(convert_db_error(e)))
 }
 
 
@@ -406,6 +406,16 @@ async fn db_test(db: PgDatabase) -> &'static str {
     "This is a database test with diesel."
 }
 
+
+#[get("/init_database")]
+async fn init_database(db: PgDatabase) -> Result<Created<Json<ApiSuccess>>, Json<ApiError>> {
+    db.run(|c| models::db::init_database(c))
+    .await
+    .map(|_| Created::new("/init_database").body(Json(ApiSuccess::new())))
+    .map_err(|e| Json(convert_db_error(e)))
+}
+
+
 #[database("reservations_db")]
 struct PgDatabase(rocket_sync_db_pools::diesel::PgConnection);
 
@@ -437,7 +447,7 @@ fn rocket() -> _ {
             get_booking_state_4,
             get_bookings_state_5,
             get_bookings_state_6,
-            db_test,
+            init_database,
             add_reservations,
         ],
     )

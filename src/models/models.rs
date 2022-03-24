@@ -62,7 +62,7 @@ pub struct DbSlot {
     pub state: String,
     pub start: i64,
     pub finish: i64,
-    pub bookable: i32,
+    pub bookable_id: i32,
 }
 
 
@@ -109,7 +109,7 @@ impl From<Slot> for DbSlot {
             state: item.state.to_string(),
             start: item.start,
             finish: item.finish,
-            bookable: item.bookable.id,
+            bookable_id: item.bookable.id,
         }
     }
 }
