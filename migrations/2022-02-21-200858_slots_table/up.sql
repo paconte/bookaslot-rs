@@ -1,9 +1,13 @@
 -- Your SQL goes here
---CREATE TYPE State AS ENUM ('BOOKED', 'FREE');
+CREATE TABLE bookable (
+  id serial PRIMARY KEY,
+  name varchar NOT NULL
+);
 
 CREATE TABLE slots (
-  id SERIAL PRIMARY KEY,
-  state VARCHAR NOT NULL,
-  start BIGINT NOT NULL,
-  finish BIGINT NOT NULL
+  id serial PRIMARY KEY,
+  state varchar NOT NULL,
+  start bigint NOT NULL,
+  finish bigint NOT NULL,
+  bookable_id integer REFERENCES bookable (id) ON DELETE RESTRICT NOT NULL
 );

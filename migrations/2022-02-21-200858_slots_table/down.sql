@@ -1,3 +1,4 @@
 -- This file should undo anything in `up.sql`
-DROP TABLE slots;
+DROP TABLE IF EXISTS slots;
+DROP TABLE IF EXISTS bookable;
 --DROP TYPE State;

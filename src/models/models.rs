@@ -3,6 +3,7 @@ use diesel::backend::Backend;
 use diesel::serialize::{self, IsNull, Output, ToSql};
 use diesel::deserialize::{self, FromSql};
 use diesel::pg::Pg;
+//use diesel::{Insertable, Queryable};
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
@@ -12,7 +13,8 @@ use std::io::Write;
 use std::str::FromStr;
 
 
-use crate::models::db::DbSlot;
+use crate::models::schema::bookable;
+use crate::models::schema::slots;
 
 
 /*
@@ -36,19 +38,80 @@ pub enum State {
 }
 
 
-#[derive(Serialize, Debug, Copy, Clone, Hash, Eq)]
+#[derive(Serialize, Debug, Clone, Copy, Hash, Eq)]
 pub struct TimeRange {
     pub init: i64,
     pub end: i64,
 }
 
 
-#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Slot {
     pub id: i32,
     pub state: State,
     pub start: i64,
-    pub finish: i64
+    pub finish: i64,
+    pub bookable: Bookable,
+}
+
+
+#[derive(Insertable, Queryable, Debug)]
+#[table_name="slots"]
+pub struct DbSlot {
+    pub id: i32,
+    pub state: String,
+    pub start: i64,
+    pub finish: i64,
+    pub bookable_id: i32,
+}
+
+
+#[derive(Clone, Debug, Insertable, Queryable, Deserialize, Serialize)]
+#[table_name="bookable"]
+pub struct Bookable {
+    pub id: i32,
+    pub name: String,
+}
+
+
+/**
+ *  DbSlot implementations
+ */
+
+impl DbSlot {
+
+    pub fn into_db_slots(items: Vec<Slot>) -> Vec<DbSlot> {
+        items
+            .into_iter()
+            .map(|item| DbSlot::from(item))
+            .collect()
+    }
+
+    pub fn into_slots(items: Vec<(Bookable, DbSlot)>) -> Vec<Slot> {
+        items
+            .into_iter()
+            .map(|item| item.into())
+            .collect()
+    }
+}
+
+
+impl From<Slot> for DbSlot {
+    fn from(item: Slot) -> Self {
+        /*
+        let slot_state: State = match item.state {
+            State::TOBEBOOKED => State::BOOKED,
+            other => other,
+        };
+        */
+        DbSlot {
+            id: item.id,
+            state: item.state.to_string(),
+            start: item.start,
+            finish: item.finish,
+            bookable_id: item.bookable.id,
+        }
+    }
 }
 
 
@@ -63,10 +126,11 @@ pub struct Slot {
         let mut result: BTreeMap<TimeRange, Vec<Slot>> = BTreeMap::new();
 
         for slot in slots.into_iter() {
-            let time_range = TimeRange::from_slot(slot);
+            let time_range = TimeRange::from_slot(slot.clone());
             let entry = result.entry(time_range).or_insert(Vec::new());
-            entry.push(slot);
+            entry.push(slot.clone());
         }
+
         result
     }
 
@@ -83,13 +147,14 @@ pub struct Slot {
 }
 
 
-impl From<DbSlot> for Slot {
-    fn from(item: DbSlot) -> Self {
+impl From<(Bookable, DbSlot)> for Slot {
+    fn from(item: (Bookable, DbSlot)) -> Self {
         Slot {
-            id: item.id,
-            state: State::from_str(&item.state).unwrap(),
-            start: item.start,
-            finish: item.finish,
+            id: item.1.id,
+            state: State::from_str(&item.1.state).unwrap(),
+            start: item.1.start,
+            finish: item.1.finish,
+            bookable: Bookable {id: item.0.id, name: item.0.name},
         }
     }
 }
@@ -144,9 +209,9 @@ impl TimeRange {
 
 impl Template {
 
-    pub fn generate_slots(template: Template, size: u8) -> Vec<Slot> {
-        if size < 1 {
-            panic!("Argument size ({}), must be bigger than 0.", size);
+    pub fn generate_slots(template: Template, bookables: Vec<Bookable>) -> Vec<Slot> {
+        if bookables.len() < 1 {
+            panic!("Argument size ({}), must be bigger than 0.", bookables.len());
         }
 
         let mut result: Vec<Slot> = Vec::new();
@@ -162,12 +227,14 @@ impl Template {
                 if new_end <= template.end_time {
                     let new_init_slot = init_day.and_time(init_time).unwrap();
                     let new_end_slot = init_day.and_time(new_end).unwrap();
-                    for _ in 0..size {
+
+                    for bookable in bookables.iter() {
                         let slot = Slot {
                             id: id,
                             state: State::new(2, rng.gen_range(0..3)),
                             start: new_init_slot.timestamp(),
                             finish: new_end_slot.timestamp(),
+                            bookable: bookable.clone(),
                         };
                         result.push(slot);
                         id += 1;

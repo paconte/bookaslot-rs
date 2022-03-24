@@ -1,21 +1,12 @@
-use diesel::{Insertable, Queryable};
 use diesel::prelude::*;
 use diesel::pg::upsert::excluded;
 use diesel::result::Error;
 
+use crate::models::models::{Bookable, DbSlot, Slot};
+
+use crate::models::schema::bookable;
 use crate::models::schema::slots;
-use crate::models::schema::slots::{id, state, start, finish};
-use crate::models::models::Slot;
-
-
-#[derive(Insertable, Queryable, Debug)]
-#[table_name="slots"]
-pub struct DbSlot {
-    pub id: i32,
-    pub state: String,
-    pub start: i64,
-    pub finish: i64
-}
+use crate::models::schema::slots::{id, state, start, finish, bookable_id};
 
 
 /*
@@ -25,19 +16,31 @@ fn error_status(error: Error) -> Failure {
         _ => Status::InternalServerError
     })
 }
-*/
+
 
 fn fetch_db_slots_by_time(begin: i64, end: i64, conn: &diesel::PgConnection) -> Result<Vec<Slot>, Error> {
     let db_slots = slots::table.filter(start.ge(begin)).filter(finish.le(end)).load::<DbSlot>(conn)?;
     let slots: Vec<Slot> = DbSlot::into_slots(db_slots);
     Ok(slots)
 }
+*/
+
+
+fn fetch_db_slots_by_time(begin: i64, end: i64, conn: &diesel::PgConnection) -> Result<Vec<Slot>, Error> {
+    let data = bookable::table.inner_join(slots::table)
+        .filter(start.ge(begin))
+        .filter(finish.le(end))
+        .load::<(Bookable, DbSlot)>(conn)?;
+    let slots: Vec<Slot> = DbSlot::into_slots(data);
+    Ok(slots)
+}
 
 
 pub fn fetch_all_slots(conn: &diesel::PgConnection) ->  Result<Vec<Slot>, Error> {
-    let all_db_slots = slots::table.load::<DbSlot>(conn).unwrap();
-    let all_slots: Vec<Slot> = DbSlot::into_slots(all_db_slots);
-    Ok(all_slots)
+    let data = bookable::table.inner_join(slots::table)
+        .load::<(Bookable, DbSlot)>(conn)?;
+    let slots: Vec<Slot> = DbSlot::into_slots(data);
+    Ok(slots)
 }
 
 
@@ -57,7 +60,9 @@ fn insert_db_slot(conn: &diesel::PgConnection, slot: DbSlot) -> QueryResult<usiz
 fn insert_db_slots(conn: &diesel::PgConnection, slots: Vec<DbSlot>) -> QueryResult<usize> {
     let mut new_slots = Vec::new();
     for slot in slots {
-        new_slots.push((state.eq(slot.state), start.eq(slot.start), finish.eq(slot.finish)));
+        new_slots.push(
+            (state.eq(slot.state), start.eq(slot.start), finish.eq(slot.finish), bookable_id.eq(slot.bookable_id))
+        );
     }
     diesel::insert_into(slots::table)
         .values(&new_slots)
@@ -81,11 +86,25 @@ fn raw_insert_db_slots(conn: &diesel::PgConnection, slots: Vec<DbSlot>) {
 }
 
 
+/**
+ * Bookable methods
+ */
+fn insert_bookables(conn: &diesel::PgConnection, bookables: Vec<Bookable>) -> QueryResult<usize> {
+    diesel::insert_into(bookable::table)
+        .values(&bookables)
+        .execute(conn)
+}
+
+
+/**
+ * TEST METHODS (to be deleted)
+ */
+
 pub fn test_database(conn: &diesel::PgConnection) {
     let slots = vec![
-        DbSlot{id: 1, state: String::from("FREE"), start: 100, finish: 200},
-        DbSlot{id: 2, state: String::from("FREE"), start: 200, finish: 300},
-        DbSlot{id: 3, state: String::from("BOOKED"), start: 300, finish: 400}
+        DbSlot{id: 1, state: String::from("FREE"), start: 100, finish: 200, bookable_id: 1},
+        DbSlot{id: 2, state: String::from("FREE"), start: 200, finish: 300, bookable_id: 1},
+        DbSlot{id: 3, state: String::from("BOOKED"), start: 300, finish: 400, bookable_id: 1}
     ];
     raw_insert_db_slots(conn, slots);
 
@@ -94,41 +113,13 @@ pub fn test_database(conn: &diesel::PgConnection) {
 }
 
 
-/**
- *  DbSlot implementations
- */
-
-impl DbSlot {
-
-    pub fn into_db_slots(items: Vec<Slot>) -> Vec<DbSlot> {
-        items
-            .into_iter()
-            .map(|item| DbSlot::from(item))
-            .collect()
-    }
-
-    pub fn into_slots(items: Vec<DbSlot>) -> Vec<Slot> {
-        items
-            .into_iter()
-            .map(|item| item.into())
-            .collect()
-    }
-}
-
-
-impl From<Slot> for DbSlot {
-    fn from(item: Slot) -> Self {
-        /*
-        let slot_state: State = match item.state {
-            State::TOBEBOOKED => State::BOOKED,
-            other => other,
-        };
-        */
-        DbSlot {
-            id: item.id,
-            state: item.state.to_string(),
-            start: item.start,
-            finish: item.finish,
-        }
-    }
+/// Initizialize the database with some bookable objects.
+/// The bookable objects can be used to book slots.
+pub fn init_database(conn: &diesel::PgConnection) -> QueryResult<usize> {
+    let bookables = vec![
+        Bookable {id:1, name: String::from("Padel 1")},
+        Bookable {id:2, name: String::from("Padel 2")},
+        Bookable {id:3, name: String::from("Padel 3")},
+    ];
+    insert_bookables(conn, bookables)
 }
