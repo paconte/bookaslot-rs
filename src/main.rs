@@ -9,7 +9,7 @@ use rocket::serde::{Serialize,Deserialize};
 use rocket::response::status::Created;
 use rocket_sync_db_pools;
 use rocket_sync_db_pools::database;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 
 mod models;
 
@@ -36,6 +36,9 @@ impl ApiSuccess {
         ApiSuccess {success: true}
     }
 }
+
+
+static BOOKABLES: (&str, &str, &str) = ("Padel 1", "Padel 2", "Padel 3");
 
 
 #[get("/")]
@@ -315,7 +318,7 @@ fn get_bookings_state_5() -> Json<Vec<TimeItems>> {
         Bookable {id: 1, name: String::from("Pista 1")},
         Bookable {id: 2, name: String::from("Pista 2")}
     ];
-    let slots = Template::generate_slots(template, bookables);
+    let slots = Template::generate_slots(&template, &bookables, HashSet::new());
     let hourly_slots = Slot::to_hour_map(slots);
     let result = TimeItems::to_hour_response(hourly_slots);
 
@@ -324,17 +327,19 @@ fn get_bookings_state_5() -> Json<Vec<TimeItems>> {
 
 
 #[get("/getBookings6")]
-fn get_bookings_state_6() -> Json<Vec<DailySortedSlots>>  {
+async fn get_bookings_state_6(db: PgDatabase) -> Json<Vec<DailySortedSlots>>  {
     let template = create_template(30);
     let bookables = vec![
         Bookable {id: 1, name: String::from("Pista 1")},
         Bookable {id: 2, name: String::from("Pista 2")}
     ];
-    let slots = Template::generate_slots(template, bookables);
-    let daily_slots = Slot::to_day_map(slots);
+    let db_slots = db.run(|c| models::db::fetch_all_slots(c)).await.unwrap();
+    let view_slots = Template::generate_slots(
+        &template, &bookables, HashSet::from_iter(db_slots)
+    );
+    let daily_slots = Slot::to_day_map(view_slots);
     let result = DailySortedSlots::to_day_response(daily_slots);
 
-    println!("{:?}", result);
     Json(result)
 }
 
@@ -348,7 +353,8 @@ fn convert_db_error(error: diesel::result::Error) -> ApiError {
 
 
 #[post("/addReservations",  data = "<slots>")]
-async fn add_reservations(db: PgDatabase, slots: Json<Vec<Slot>>) -> Result<Created<Json<ApiSuccess>>, Json<ApiError>> {
+async fn add_reservations(db: PgDatabase, slots: Json<Vec<Slot>>)
+-> Result<Created<Json<ApiSuccess>>, Json<ApiError>> {
     db.run(|c| models::db::insert_slots(c, slots.into_inner()))
     .await
     .map(|_| Created::new("/addReservations").body(Json(ApiSuccess::new())))
@@ -408,8 +414,10 @@ async fn db_test(db: PgDatabase) -> &'static str {
 
 
 #[get("/init_database")]
-async fn init_database(db: PgDatabase) -> Result<Created<Json<ApiSuccess>>, Json<ApiError>> {
-    db.run(|c| models::db::init_database(c))
+async fn init_database(
+    db: PgDatabase
+) -> Result<Created<Json<ApiSuccess>>, Json<ApiError>> {
+    db.run(|c| models::db::init_database(c, BOOKABLES))
     .await
     .map(|_| Created::new("/init_database").body(Json(ApiSuccess::new())))
     .map_err(|e| Json(convert_db_error(e)))

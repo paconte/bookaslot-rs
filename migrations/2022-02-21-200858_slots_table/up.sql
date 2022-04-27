@@ -1,7 +1,7 @@
 -- Your SQL goes here
 CREATE TABLE bookable (
   id serial PRIMARY KEY,
-  name varchar NOT NULL
+  name varchar(50) NOT NULL
 );
 
 CREATE TABLE slots (
