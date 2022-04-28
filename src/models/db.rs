@@ -106,11 +106,10 @@ pub fn test_database(conn: &diesel::PgConnection) {
 
 /// Initizialize the database with some bookable objects.
 /// The bookable objects can be used to book slots.
-pub fn init_database(
-    conn: &diesel::PgConnection,
-    bookables: (&str, &str, &str)
-) -> QueryResult<usize> {
+pub fn init_database(conn: &diesel::PgConnection, bookables: (&str, &str, &str)) -> QueryResult<usize> {
     let mut new_bookables = Vec::new();
     new_bookables.push(bookables.0);
+    new_bookables.push(bookables.1);
+    new_bookables.push(bookables.2);
     insert_bookables(conn, new_bookables)
 }
