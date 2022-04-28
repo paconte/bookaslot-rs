@@ -50,13 +50,6 @@ pub fn insert_slots(conn: &diesel::PgConnection, slots: Vec<Slot>) -> QueryResul
 }
 
 
-fn insert_db_slot(conn: &diesel::PgConnection, slot: DbSlot) -> QueryResult<usize> {
-    diesel::insert_into(slots::table)
-        .values((state.eq(slot.state), start.eq(slot.start), finish.eq(slot.finish)))
-        .execute(conn)
-}
-
-
 fn insert_db_slots(conn: &diesel::PgConnection, slots: Vec<DbSlot>) -> QueryResult<usize> {
     let mut new_slots = Vec::new();
     for slot in slots {
@@ -67,11 +60,6 @@ fn insert_db_slots(conn: &diesel::PgConnection, slots: Vec<DbSlot>) -> QueryResu
     diesel::insert_into(slots::table)
         .values(&new_slots)
         .execute(conn)
-    /*
-    for slot in slots {
-        insert_db_slot(conn, slot)
-    }
-    */
 }
 
 
@@ -89,9 +77,13 @@ fn raw_insert_db_slots(conn: &diesel::PgConnection, slots: Vec<DbSlot>) {
 /**
  * Bookable methods
  */
-fn insert_bookables(conn: &diesel::PgConnection, bookables: Vec<Bookable>) -> QueryResult<usize> {
+fn insert_bookables(conn: &diesel::PgConnection, bookables: Vec<&str>) -> QueryResult<usize> {
+    let mut new_bookables = Vec::new();
+    for item in bookables {
+        new_bookables.push(bookable::name.eq(item));
+    }
     diesel::insert_into(bookable::table)
-        .values(&bookables)
+        .values(&new_bookables)
         .execute(conn)
 }
 
@@ -109,17 +101,15 @@ pub fn test_database(conn: &diesel::PgConnection) {
     raw_insert_db_slots(conn, slots);
 
     let all_slots = fetch_all_slots(conn).unwrap();
-    println!("{:?}", all_slots);
 }
 
 
 /// Initizialize the database with some bookable objects.
 /// The bookable objects can be used to book slots.
-pub fn init_database(conn: &diesel::PgConnection) -> QueryResult<usize> {
-    let bookables = vec![
-        Bookable {id:1, name: String::from("Padel 1")},
-        Bookable {id:2, name: String::from("Padel 2")},
-        Bookable {id:3, name: String::from("Padel 3")},
-    ];
-    insert_bookables(conn, bookables)
+pub fn init_database(conn: &diesel::PgConnection, bookables: (&str, &str, &str)) -> QueryResult<usize> {
+    let mut new_bookables = Vec::new();
+    new_bookables.push(bookables.0);
+    new_bookables.push(bookables.1);
+    new_bookables.push(bookables.2);
+    insert_bookables(conn, new_bookables)
 }

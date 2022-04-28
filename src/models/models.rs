@@ -7,11 +7,11 @@ use diesel::pg::Pg;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 use std::fmt;
+use std::hash::Hash;
 use std::io::Write;
 use std::str::FromStr;
-
 
 use crate::models::schema::bookable;
 use crate::models::schema::slots;
@@ -30,7 +30,7 @@ pub struct Template {
 }
 
 
-#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Deserialize, Serialize)]
 pub enum State {
     FREE,
     BOOKED,
@@ -45,7 +45,7 @@ pub struct TimeRange {
 }
 
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, Deserialize, Serialize)]
 pub struct Slot {
     pub id: i32,
     pub state: State,
@@ -66,7 +66,7 @@ pub struct DbSlot {
 }
 
 
-#[derive(Clone, Debug, Insertable, Queryable, Deserialize, Serialize)]
+#[derive(Clone, Debug, Eq, Hash, Insertable, Queryable, Deserialize, Serialize)]
 #[table_name="bookable"]
 pub struct Bookable {
     pub id: i32,
@@ -122,6 +122,12 @@ impl From<Slot> for DbSlot {
 
  impl Slot {
 
+    pub fn time_eq(&self, other: &Slot) -> bool {
+        self.bookable.id == other.bookable.id &&
+        self.start == other.start &&
+        self.finish == other.finish
+    }
+
     pub fn to_hour_map(slots: Vec<Slot>) -> BTreeMap<TimeRange, Vec<Slot>> {
         let mut result: BTreeMap<TimeRange, Vec<Slot>> = BTreeMap::new();
 
@@ -145,7 +151,6 @@ impl From<Slot> for DbSlot {
         result
     }
 }
-
 
 impl From<(Bookable, DbSlot)> for Slot {
     fn from(item: (Bookable, DbSlot)) -> Self {
@@ -209,7 +214,10 @@ impl TimeRange {
 
 impl Template {
 
-    pub fn generate_slots(template: Template, bookables: Vec<Bookable>) -> Vec<Slot> {
+    pub fn generate_slots(
+        template: &Template, bookables: &Vec<Bookable>, slots: HashSet<Slot>
+    ) -> Vec<Slot> {
+
         if bookables.len() < 1 {
             panic!("Argument size ({}), must be bigger than 0.", bookables.len());
         }
@@ -218,7 +226,7 @@ impl Template {
         let mut init_day = template.init_day;
         let mut init_time;
         let mut id: i32 = 0;
-        let mut rng = rand::thread_rng();
+        //let mut rng = rand::thread_rng();
 
         while init_day <= template.end_day {
             init_time = template.init_time;
@@ -227,15 +235,19 @@ impl Template {
                 if new_end <= template.end_time {
                     let new_init_slot = init_day.and_time(init_time).unwrap();
                     let new_end_slot = init_day.and_time(new_end).unwrap();
-
                     for bookable in bookables.iter() {
-                        let slot = Slot {
+                        let mut slot = Slot {
                             id: id,
-                            state: State::new(2, rng.gen_range(0..3)),
+                            //state: State::new(2, rng.gen_range(0..3)),
+                            state: State::FREE,
                             start: new_init_slot.timestamp(),
                             finish: new_end_slot.timestamp(),
                             bookable: bookable.clone(),
                         };
+                        if None != slots.iter().find(|x| x.time_eq(&slot)) {
+                            slot.state = State::BOOKED;
+                        }
+
                         result.push(slot);
                         id += 1;
                     }
@@ -244,7 +256,6 @@ impl Template {
             }
             init_day = init_day + Duration::days(1);
         }
-
         result
     }
 }
@@ -287,6 +298,16 @@ impl fmt::Display for State {
             State::TOBEBOOKED => write!(f, "BOOKED"),
             //State::TOBEBOOKED => write!(f, "TOBEBOOKED"),
         }
+    }
+}
+
+
+/**
+ * Bookable implementations
+ */
+impl PartialEq for Bookable {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
     }
 }
 
