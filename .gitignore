@@ -2,7 +2,7 @@
 *.env
 
 # docker
-*/postgres-data/
+*postgres-data/
 
 # rust
 */target/
