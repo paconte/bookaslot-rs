@@ -2,7 +2,16 @@ version: '3.7'
 
 services:
 
-  reservation-api:
+  reservations-web:
+    image: svelte-docker
+    environment:
+      PROXY_API: http://reservations-api:8000/
+    ports:
+      - 5000:80
+    depends_on:
+      - reservations-api
+
+  reservations-api:
     image: paconte/rs-reservation-api:${RESERVATIONS_API_VERSION}
     #image: rust-reservation-api
     restart: unless-stopped
