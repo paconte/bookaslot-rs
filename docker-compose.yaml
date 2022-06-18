@@ -3,7 +3,8 @@ version: '3.7'
 services:
 
   reservations-web:
-    image: svelte-docker
+    image: paconte/bookaslot-web:${BOOKASLOT_VERSION}
+    #image: bookaslot-web
     environment:
       PROXY_API: http://reservations-api:8000/
     ports:
@@ -12,7 +13,8 @@ services:
       - reservations-api
 
   reservations-api:
-    image: paconte/rs-reservation-api:${RESERVATIONS_API_VERSION}
+    image: paconte/bookaslot-api:${BOOKASLOT_VERSION}
+    #image: paconte/rs-reservation-api:${RESERVATIONS_API_VERSION}
     #image: rust-reservation-api
     restart: unless-stopped
     ports:
