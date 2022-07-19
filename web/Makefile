@@ -1,2 +1,2 @@
 build:
-	docker build . -t bookaslot-web
+	docker build --no-cache -t bookaslot-web .
