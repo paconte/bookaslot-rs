@@ -1,0 +1,21 @@
+FROM node:18-alpine3.15
+
+WORKDIR /usr/src/app
+#COPY ["package.json", "package-lock.json", "rollup.config.js", "tailwind.config.js", "./"]
+COPY ./package.json ./
+COPY ./package-lock.json ./
+COPY ./rollup.config.js ./
+RUN npm install && npm cache clean --force
+#ENV PATH=/usr/local/myapp/node_modules/.bin:$PATH
+#WORKDIR /usr/local/apps/myapp/dev
+
+#COPY . .
+#COPY .env ./
+COPY ./src ./src
+COPY ./public ./public
+
+#EXPOSE ${PORT}
+EXPOSE 5000
+ENV HOST=0.0.0.0
+
+CMD ["npm", "run", "dev"]
