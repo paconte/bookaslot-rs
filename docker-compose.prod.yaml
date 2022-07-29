@@ -2,8 +2,27 @@ version: '3.7'
 
 services:
 
-  reservation-api:
-    image: paconte/rs-reservation-api:${RESERVATIONS_API_VERSION}
+  nginx-proxy:
+    image: nginx
+    volumes:
+      - ./infraestructure/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - 80:80
+    depends_on:
+      - web
+      - backend
+  web:
+    #image: paconte/bookaslot-web:${BOOKASLOT_VERSION}
+    image: bookaslot-web
+    environment:
+      PROXY_API: http://backend:8000/
+    depends_on:
+      - backend
+
+  backend:
+    #image: paconte/bookaslot-api:${BOOKASLOT_VERSION}
+    #image: paconte/rs-reservation-api:${RESERVATIONS_API_VERSION}
+    image: bookaslot-api
     restart: unless-stopped
     ports:
       - ${RESERVATIONS_API_PORT}:8000
@@ -22,7 +41,7 @@ services:
     ports:
       - ${POSTGRES_PORT}:5432
     volumes:
-      - /root/reservations/postgres-data:/var/lib/postgresql/data
+      - ${POSTGRES_DOCKER_VOLUME}
     logging:
       options:
         max-size: 10m
