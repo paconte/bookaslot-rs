@@ -1,4 +1,14 @@
-/target
-/postgres-data/
 *.code-workspace
-.env
+*.env
+
+# docker
+*postgres-data/
+
+# rust
+*/target/
+
+# svelte
+*/node_modules/
+*/public/build/
+
+*.DS_Store
