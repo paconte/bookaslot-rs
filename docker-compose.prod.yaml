@@ -12,17 +12,14 @@ services:
       - web
       - backend
   web:
-    #image: paconte/bookaslot-web:${BOOKASLOT_VERSION}
-    image: bookaslot-web
+    image: paconte/bookaslot-web:${BOOKASLOT_VERSION}
     environment:
       PROXY_API: http://backend:8000/
     depends_on:
       - backend
 
   backend:
-    #image: paconte/bookaslot-api:${BOOKASLOT_VERSION}
-    #image: paconte/rs-reservation-api:${RESERVATIONS_API_VERSION}
-    image: bookaslot-api
+    image: paconte/bookaslot-api:${BOOKASLOT_VERSION}
     restart: unless-stopped
     ports:
       - ${RESERVATIONS_API_PORT}:8000
